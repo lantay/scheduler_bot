@@ -1,0 +1,35 @@
+{
+  "name": "horizons-ai-slack-chat",
+  "version": "1.0.0",
+  "description": "A Slack bot for interpretting natural language commands",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brianfakhoury/H-AI.git"
+  },
+  "keywords": [
+    "slack",
+    "bot",
+    "nlp",
+    "ai",
+    "personal"
+  ],
+  "author": "Brian Fakhoury, Mason Lantay, Jeffrey Chen, Adam Rippley",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brianfakhoury/H-AI/issues"
+  },
+  "homepage": "https://github.com/brianfakhoury/H-AI#readme",
+  "dependencies": {
+    "eslint": "^3.19.0",
+    "eslint-plugin-import": "^2.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.7.0"
+  }
+}
