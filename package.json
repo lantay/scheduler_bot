@@ -34,6 +34,7 @@
     "eslint-plugin-import": "^2.2.0",
     "express": "^4.15.3",
     "googleapis": "^20.1.0",
+    "mongoose": "^4.11.3",
     "ngrok": "^2.2.14"
   },
   "devDependencies": {
