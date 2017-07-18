@@ -60,5 +60,8 @@ typings/
 # Remove dist from git
 dist
 
+<<<<<<< HEAD
 # Keep away env
+=======
+>>>>>>> calConnection2
 env.sh
