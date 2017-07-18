@@ -61,7 +61,10 @@ typings/
 dist
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Keep away env
+=======
+>>>>>>> calConnection2
 =======
 >>>>>>> calConnection2
 env.sh
