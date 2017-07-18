@@ -57,6 +57,7 @@ typings/
 # dotenv environment variables file
 .env
 
+# Remove dist from git
 dist
 
 env.sh
