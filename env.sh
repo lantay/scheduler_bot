@@ -1,7 +1,0 @@
-export MONGODB_URI="mongodb://mason:lantay@ds157282.mlab.com:57282/earlystage"
-export BOT_TOKEN="xoxb-214620957634-DRPtK3IqCgBkzXiBVgYQFVnC"
-export SLACK_OAUTH_TOKEN="xoxp-213339421361-214008545765-214086591697-6b221a0fd9021da8bdb627a194bed111"
-export API_AI_TOKEN=""
-export GOOGLE_CLIENT_ID="223500708052-00abq7vfnlbmdfv2bj9ivglu6v996723.apps.googleusercontent.com"
-export GOOGLE_CLIENT_SECRET="vdxtXn4BUOE96LJ9UlIPiyIH"
-export DOMAIN=""
