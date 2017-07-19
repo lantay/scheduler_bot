@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "mocha --compilers js:babel-register",
-    "start": "./node_modules/.bin/babel-node lib/index.js",
+    "start": "babel-node lib/index.js",
     "start-local": "nodemon lib/index.js --exec babel-node",
     "build": "babel lib -d dist",
     "serve": "node dist/index.js"
