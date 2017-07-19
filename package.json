@@ -2,13 +2,13 @@
   "name": "horizons-ai-slack-chat",
   "version": "1.0.0",
   "description": "A Slack bot for interpretting natural language commands",
-  "main": "server.js",
+  "main": "app/index.js",
   "scripts": {
     "test": "mocha --compilers js:babel-register",
-    "start": "babel-node lib/index.js",
-    "start-local": "nodemon lib/index.js --exec babel-node",
-    "build": "babel lib -d dist",
-    "serve": "node dist/index.js"
+    "start": "babel-node app/index.js",
+    "start-local": "nodemon app/index.js --exec babel-node",
+    "build": "babel app -d dist",
+    "serve": "node app/index.js"
   },
   "repository": {
     "type": "git",
