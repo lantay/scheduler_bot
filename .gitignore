@@ -60,6 +60,5 @@ typings/
 # Remove dist from git
 dist
 
-
 # Keep away env
 env.sh
