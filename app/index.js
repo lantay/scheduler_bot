@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
   res.send('hi  ');
 });
 
-app.post('/slack/interactive', (req, res) => {
+app.post('/interactive', (req, res) => {
   const payload = JSON.parse(req.body.payload);
   if (payload.actions[0].value === 'true') {
     res.send('Created reminder :white_check_mark:');
