@@ -60,18 +60,18 @@ rtm.on(RTM_EVENTS.MESSAGE, (message) => {
           },
         })
           .then(({ data }) => {
-            // console.log('what is data', data) //data.result.actionIncomplete 
-            if (data.result.metadata.intentName !== 'reminder.add' && data.result.metadata.intentName !== 'meeting.add') {
+            console.log('what is data', data) //data.result.actionIncomplete 
+            if (data.result.actionIncomplete || (data.result.metadata.intentName !== 'reminder.add' && data.result.metadata.intentName !== 'meeting.add')) {
               console.log('action incomplete');
               rtm.sendMessage(data.result.fulfillment.speech, message.channel);
             } else if (data.result.metadata.intentName === 'reminder.add') {
               console.log('Action complete', data.result.parameters);
-              user.task = data.result.parameters.task; // eslint-disable-line
-              user.date = data.result.parameters.date; // eslint-disable-line
+              user.pending.task = data.result.parameters.task; // eslint-disable-line
+              user.pending.date = data.result.parameters.date; // eslint-disable-line
               user.save();
 
               web.chat.postMessage(message.channel, `Creating reminder for
-        ${data.result.parameters.task} on ${data.result.parameters.date}`,
+        ${user.pending.task} on ${user.pending.date}`,
                 {
                   attachments: [
                     {
@@ -98,6 +98,7 @@ rtm.on(RTM_EVENTS.MESSAGE, (message) => {
                     },
                   ],
                 });
+                
             } else if (data.result.metadata.intentName === 'meeting.add') {
               console.log('meeting added');
             }

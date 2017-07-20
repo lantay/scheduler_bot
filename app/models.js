@@ -13,8 +13,11 @@ const User = mongoose.model('User', {
     required: true,
   },
   google: {},
-  date: String,
-  task: String,
+  pending: {
+    date: String,
+    task: String,
+  },
+
 });
 
 const Reminder = mongoose.model('Reminder', {
