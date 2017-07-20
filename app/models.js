@@ -14,7 +14,7 @@ const User = mongoose.model('User', {
   },
   google: {},
   date: String,
-  description: String,
+  task: String,
 });
 
 const Reminder = mongoose.model('Reminder', {

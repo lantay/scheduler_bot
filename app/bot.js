@@ -25,89 +25,86 @@ rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, () => {
 });
 
 rtm.on(RTM_EVENTS.MESSAGE, (message) => {
-  // const dm = rtm.dataStore.getDMByUserId(message.user);
-  // if (!dm || dm.id !== message.channel || message.type !== 'message') {
-  //   console.log('MESSAGE NOT SENT TO DM, IGNORING');
-  //   return;
-  // }
-  // console.log('what is messsage', message)
-  // if (message.text.indexOf('Remind') !== -1) {
-  web.reactions.add('brian', {
-    channel: message.channel,
-    timestamp: message.ts,
-  });
-  rtm.sendMessage(`Hello <@${message.user}>!`, message.channel);
-  User.findOne({ slackId: message.user })
-    .then((user) => {
-      if (!user) {
-        return new User({
-          slackId: message.user,
-          slackDmId: message.channel,
-        }).save();
-      }
-      return user;
-    })
-    .then((user) => {
-      const { _id: userId } = user;
-      if (!user.google) {
-        rtm.sendMessage(`Hello!
-      This is Scheduler Bot. In order to schedule reminders for you, I need access to your Google Calendar.
-      Please visit: http://localhost:3000/connect?user=${userId} to setup Google Calendar`, message.channel);
-      }
-      axios.get('https://api.api.ai/api/query', {
-        params: {
-          v: 20150910,
-          lang: 'en',
-          timezone: '2017-07-17T16:55:33-0700',
-          query: message.text,
-          sessionId: message.user,
-        },
-        headers: {
-          Authorization: 'Bearer a4bede1b2c974153af4e0548d6a09441',
-        },
-      })
-        .then(({ data }) => {
-          if (data.result.actionIncomplete) {
-            console.log('action incomplete');
-            rtm.sendMessage(data.result.fulfillment.speech, message.channel);
-          } else if (data.result.metadata.intentName === 'reminder.add') {
-            console.log('Action complete', data.result.parameters);
-            user.description = data.result.parameters.description; // eslint-disable-line
-            user.date = data.result.parameters.date; // eslint-disable-line
-            user.save();
-            web.chat.postMessage(message.channel, `Creating reminder for
-        ${data.result.parameters.task} on ${data.result.parameters.date}`,
-              {
-                attachments: [
-                  {
-                    fallback: 'not able',
-                    callback_id: 'simple',
-                    color: '#3AA3E3',
-                    id: 1,
-                    // 'attachment_type': 'default',
-                    actions: [
-                      {
-                        id: '1',
-                        name: 'confirmation',
-                        text: 'Yes',
-                        type: 'button',
-                        value: 'true',
-                      },
-                      {
-                        id: '2',
-                        name: 'confirmation',
-                        text: 'No',
-                        type: 'button',
-                      },
-                    ],
-                  },
-                ],
-              });
-          }
-        })
-
-        .catch(err => console.log('THERE IS AN ERROR', err));
+  if (message.user) {
+    web.reactions.add('brian', {
+      channel: message.channel,
+      timestamp: message.ts,
     });
+    rtm.sendMessage(`Hello <@${message.user}>!`, message.channel);
+    User.findOne({ slackId: message.user })
+      .then((user) => {
+        if (!user) {
+          return new User({
+            slackId: message.user,
+            slackDmId: message.channel,
+          }).save();
+        }
+        return user;
+      })
+      .then((user) => {
+        if (!user.google) {
+          rtm.sendMessage(`Hello!
+      This is Scheduler Bot. In order to schedule reminders for you, I need access to your Google Calendar.
+      Please visit: http://localhost:3000/connect?user=${user._id} to setup Google Calendar`, message.channel);
+        }
+        axios.get('https://api.api.ai/api/query', {
+          params: {
+            v: 20150910,
+            lang: 'en',
+            timezone: '2017-07-17T16:55:33-0700',
+            query: message.text,
+            sessionId: message.user,
+          },
+          headers: {
+            Authorization: 'Bearer a4bede1b2c974153af4e0548d6a09441',
+          },
+        })
+          .then(({ data }) => {
+            // console.log('what is data', data) //data.result.actionIncomplete 
+            if (data.result.metadata.intentName !== 'reminder.add' && data.result.metadata.intentName !== 'meeting.add') {
+              console.log('action incomplete');
+              rtm.sendMessage(data.result.fulfillment.speech, message.channel);
+            } else if (data.result.metadata.intentName === 'reminder.add') {
+              console.log('Action complete', data.result.parameters);
+              user.task = data.result.parameters.task; // eslint-disable-line
+              user.date = data.result.parameters.date; // eslint-disable-line
+              user.save();
 
-  rtm.start();
+              web.chat.postMessage(message.channel, `Creating reminder for
+        ${data.result.parameters.task} on ${data.result.parameters.date}`,
+                {
+                  attachments: [
+                    {
+                      fallback: 'not able',
+                      callback_id: 'simple',
+                      color: '#3AA3E3',
+                      id: 1,
+                      actions: [
+                        {
+                          id: '1',
+                          name: 'confirmation',
+                          text: 'Yes',
+                          type: 'button',
+                          value: 'true',
+                        },
+                        {
+                          id: '2',
+                          name: 'confirmation',
+                          text: 'No',
+                          type: 'button',
+                          value: 'false',
+                        },
+                      ],
+                    },
+                  ],
+                });
+            } else if (data.result.metadata.intentName === 'meeting.add') {
+              console.log('meeting added');
+            }
+          })
+          .catch(err => console.log('THERE IS AN ERROR', err));
+      });
+  }
 });
+
+rtm.start();

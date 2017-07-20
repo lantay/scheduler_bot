@@ -2,6 +2,7 @@ import { RtmClient } from '@slack/client';
 import google from 'googleapis';
 import express from 'express';
 import bodyParser from 'body-parser';
+import moment from 'moment';
 import { User } from './models';
 import './bot';
 
@@ -26,16 +27,46 @@ app.get('/', (req, res) => {
   res.send('hi  ');
 });
 
-app.post('/interactive', (req, res) => {
+app.post('/slack/interactive', (req, res) => {
+  console.log('enters post slack')
   const payload = JSON.parse(req.body.payload);
   if (payload.actions[0].value === 'true') {
     User.findOne({ slackId: payload.user.id })
       .then((user) => {
-        console.log('user:', user);
+        console.log('user found');
         const googleAuth = getGoogleAuth();
-        googleAuth.setCredentials(user.google);
-        console.log('tf is payload', payload);
-        res.send('Created reminder :white_check_mark:');
+        const credentials = Object.assign({}, user.google);
+        delete credentials.profile_id;
+        delete credentials.profile_name;
+        googleAuth.setCredentials(credentials);
+        console.log('credentials set');
+        const calendar = google.calendar('v3');
+        calendar.events.insert({
+          auth: googleAuth,
+          calendarId: 'primary',
+          resource: {
+            summary: user.task,
+            start: {
+              date: user.date,
+              timeZone: 'America/Los_Angeles',
+            },
+            end: {
+              date: user.date,
+              timeZone: 'America/Los_Angeles',
+            },
+          },
+        }, (err) => {
+          if (err) {
+            console.log('this is err:', err);
+            res.send('There was an error creating reminder', err);
+          } else {
+            // console.log('user', user);
+            console.log('created successfully');
+            res.send('Created reminder :white_check_mark:');
+          }
+        });
+      }).catch((err) => {
+        console.log('ERR:', err);
       });
   } else {
     res.send('Cancelled :x:');
