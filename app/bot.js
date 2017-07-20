@@ -50,72 +50,81 @@ rtm.on(RTM_EVENTS.MESSAGE, (message) => {
       return user;
     })
     .then((user) => {
-      const { _id: userId } = user;
       if (!user.google) {
         rtm.sendMessage(`Hello!
       This is Scheduler Bot. In order to schedule reminders for you, I need access to your Google Calendar.
 
-      Please visit: http://localhost:3000/connect?user=${userId} to setup Google Calendar`, message.channel)
+      Please visit: http://localhost:3000/connect?user=${user._id} to setup Google Calendar`, message.channel)
       }
-
-      axios.get('https://api.api.ai/api/query', {
-        params: {
-          v: 20150910,
-          lang: 'en',
-          timezone: '2017-07-17T16:55:33-0700',
-          query: message.text,
-          sessionId: message.user,
-        },
-        headers: {
-          Authorization: 'Bearer a4bede1b2c974153af4e0548d6a09441',
-        },
-      })
-        .then(({ data }) => {
-          if (data.result.actionIncomplete) {
-            console.log('action incomplete');
-            rtm.sendMessage(data.result.fulfillment.speech, message.channel);
-          } else if (data.result.metadata.intentName === 'reminder.add') {
-            console.log('Action complete', data.result.parameters);
-            user.description = data.result.parameters.description;
-            user.date = data.result.parameters.date;
-            user.save
-
-
-
-              web.chat.postMessage(message.channel, `Creating reminder for
-        ${data.result.parameters.task} on ${data.result.parameters.date}`,
-              {
-                attachments: [
-                  {
-                    fallback: 'not able',
-                    callback_id: 'simple',
-                    color: '#3AA3E3',
-                    id: 1,
-                    // 'attachment_type': 'default',
-                    actions: [
-                      {
-                        id: '1',
-                        name: 'confirmation',
-                        text: 'Yes',
-                        type: 'button',
-                        value: 'true',
-                      },
-                      {
-                        id: '2',
-                        name: 'confirmation',
-                        text: 'No',
-                        type: 'button',
-                      },
-                    ],
-                  },
-                ],
-              }
-              );
-          }
-        })
-        .catch(err => console.log('THERE IS AN ERROR', err));
     });
+  axios.get('https://api.api.ai/api/query', {
+    params: {
+      v: 20150910,
+      lang: 'en',
+      timezone: '2017-07-17T16:55:33-0700',
+      query: message.text,
+      sessionId: message.user,
+    },
+    headers: {
+      Authorization: 'Bearer a4bede1b2c974153af4e0548d6a09441',
+    },
+  })
+    .then(({ data }) => {
+      // console.log('what is data', data)
+      if (data.result.actionIncomplete || data.result.metadata.intentName !== 'reminder.add') {
+        console.log('action incomplete');
+        rtm.sendMessage(data.result.fulfillment.speech, message.channel);
+      } else {
+        // console.log('post message', data.result.parameters);
+        // rtm.sendMessage(`Creating reminder for ${data.result.parameters.task}
+        // on ${data.result.parameters.date}`, message.channel)
+        // web.chat.postMessage(,message.channel,`Creating reminder for
+        // ${data.result.parameters.description} on ${data.result.parameters.date}`);
+        console.log('task:', data.result.parameters.task, 'date:', data.result.parameters.date);
 
-  rtm.start();
+        // Reminder.findOne({ date: data.result.parameters.date })
+        //   .then((reminder) => {
+        //     if (!reminder) {
+        //       return new Reminder({
+        //         subject: message,
+        //         slackDmId: message.channel,
+        //       }).save();
+        //     }
+        //   })
 
-  export default msg;
+        web.chat.postMessage(message.channel, `Creating reminder for
+        ${data.result.parameters.task} on ${data.result.parameters.date}`,
+          {
+            attachments: [
+              {
+                fallback: 'not able',
+                callback_id: 'simple',
+                color: '#3AA3E3',
+                id: 1,
+                // 'attachment_type': 'default',
+                actions: [
+                  {
+                    id: '1',
+                    name: 'confirmation',
+                    text: 'Yes',
+                    type: 'button',
+                  },
+                  {
+                    id: '2',
+                    name: 'confirmation',
+                    text: 'No',
+                    type: 'button',
+                  },
+                ]
+              }
+            ],
+          }
+        );
+      }
+    })
+    .catch(err => console.log('THERE IS AN ERROR', err));
+});
+
+rtm.start();
+
+export default msg;
