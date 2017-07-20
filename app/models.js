@@ -21,7 +21,7 @@ const User = mongoose.model('User', {
 });
 
 const Reminder = mongoose.model('Reminder', {
-  subject: {
+  task: {
     type: String,
     required: true,
   },
@@ -29,7 +29,7 @@ const Reminder = mongoose.model('Reminder', {
     type: Date,
     required: true,
   },
-  userId: {
+  userSlackId: {
     type: String,
     required: true,
   },
