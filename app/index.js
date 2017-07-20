@@ -26,10 +26,17 @@ app.get('/', (req, res) => {
   res.send('hi  ');
 });
 
-app.post('/slack/interactive', (req, res) => {
+app.post('/interactive', (req, res) => {
   const payload = JSON.parse(req.body.payload);
   if (payload.actions[0].value === 'true') {
-    res.send('Created reminder :white_check_mark:');
+    User.findOne({ slackId: payload.user.id })
+      .then((user) => {
+        console.log('user:', user);
+        const googleAuth = getGoogleAuth();
+        googleAuth.setCredentials(user.google);
+        console.log('tf is payload', payload);
+        res.send('Created reminder :white_check_mark:');
+      });
   } else {
     res.send('Cancelled :x:');
   }
