@@ -45,17 +45,21 @@ app.post('/slack/interactive', (req, res) => {
           auth: googleAuth,
           calendarId: 'primary',
           resource: {
-            summary: user.task,
+            summary: user.pending.task,
             start: {
-              date: user.date,
+              date: user.pending.date,
               timeZone: 'America/Los_Angeles',
             },
             end: {
-              date: user.date,
+              date: user.pending.date,
               timeZone: 'America/Los_Angeles',
             },
           },
         }, (err) => {
+
+          user.pending = {}; // eslint-disable-line
+          user.save();
+          console.log('theoretically clearing', user.pending);
           if (err) {
             console.log('this is err:', err);
             res.send('There was an error creating reminder', err);
@@ -70,6 +74,13 @@ app.post('/slack/interactive', (req, res) => {
       });
   } else {
     res.send('Cancelled :x:');
+    User.findOne({ slackId: payload.user.id })
+      .then((user) => {
+        user.pending.task = ''; // eslint-disable-line
+        user.pending.date = ''; // eslint-disable-line
+        console.log('user should have pending cleared', user);
+        user.save();
+      });
   }
 });
 
@@ -120,7 +131,7 @@ app.get('/connect/callback', (req, res) => {
             })
             .then((mongoUser) => {
               res.send('You are connected to Google Calendar');
-              rtm.sendMessage('You are connected to Google Calendar', mongoUser.slackDmId);
+              rtm.sendMessage('You are connected to Google Calendar' + mongoUser.slackDmId);
             });
         }
       });
