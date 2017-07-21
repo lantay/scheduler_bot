@@ -3,7 +3,7 @@ import google from 'googleapis';
 import express from 'express';
 import bodyParser from 'body-parser';
 import moment from 'moment';
-import { User } from './models';
+import { User, Reminder } from './models';
 import './bot';
 
 const botToken = process.env.BOT_TOKEN;
@@ -56,7 +56,15 @@ app.post('/slack/interactive', (req, res) => {
             },
           },
         }, (err) => {
-
+          const date = moment(user.pending.date).unix() * 1000;
+          console.log(date);
+          const newReminder = new Reminder({
+            task: user.pending.task,
+            date,
+            userSlackId: user.slackId,
+          });
+          console.log('this is the reminder', newReminder);
+          newReminder.save();
           user.pending = {}; // eslint-disable-line
           user.save();
           console.log('theoretically clearing', user.pending);
