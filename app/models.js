@@ -16,6 +16,9 @@ const User = mongoose.model('User', {
   pending: {
     date: String,
     task: String,
+    title: String,
+    time: String,
+    invitees: String,
   },
 
 });
@@ -35,9 +38,33 @@ const Reminder = mongoose.model('Reminder', {
   },
 });
 
+const Meeting = mongoose.model('Meeting', {
+  title: {
+    type: String,
+    required: true,
+  },
+  date: {
+    type: String,
+    required: true,
+  },
+  time: {
+    type: String,
+    required: true,
+  },
+  userSlackId: {
+    type: String,
+    required: true,
+  },
+  invitees: {
+    type: String,
+  },
+
+});
+
 module.exports = {
   User,
   Reminder,
+  Meeting,
 };
 
 // unnecessary comment

@@ -3,7 +3,7 @@ import google from 'googleapis';
 import express from 'express';
 import bodyParser from 'body-parser';
 import moment from 'moment';
-import { User, Reminder } from './models';
+import { User, Reminder, Meeting } from './models';
 import './bot';
 
 const botToken = process.env.BOT_TOKEN;
@@ -28,8 +28,9 @@ app.get('/', (req, res) => {
 });
 
 app.post('/slack/interactive', (req, res) => {
-  console.log('enters post slack')
+  console.log('enters post slack');
   const payload = JSON.parse(req.body.payload);
+  console.log("this is payload", payload);
   if (payload.actions[0].value === 'true') {
     User.findOne({ slackId: payload.user.id })
       .then((user) => {
@@ -41,42 +42,91 @@ app.post('/slack/interactive', (req, res) => {
         googleAuth.setCredentials(credentials);
         console.log('credentials set');
         const calendar = google.calendar('v3');
-        calendar.events.insert({
-          auth: googleAuth,
-          calendarId: 'primary',
-          resource: {
-            summary: user.pending.task,
-            start: {
-              date: user.pending.date,
-              timeZone: 'America/Los_Angeles',
+        const formatDate = user.pending.date + 'T' + user.pending.time + '-07:00';
+        const formatEndDate = moment(formatDate).add(1, 'hour').format();
+        console.log("end date", formatEndDate);
+        console.log('formatted date', formatDate);
+        if (payload.callback_id === 'meeting') {
+          calendar.events.insert({
+            auth: googleAuth,
+            calendarId: 'primary',
+            resource: {
+              summary: user.pending.title,
+              start: {
+                dateTime: formatDate,
+                timeZone: 'America/Los_Angeles',
+              },
+              end: {
+                dateTime: formatEndDate,
+                timeZone: 'America/Los_Angeles',
+              },
             },
-            end: {
-              date: user.pending.date,
-              timeZone: 'America/Los_Angeles',
-            },
-          },
-        }, (err) => {
-          const date = moment(user.pending.date).unix() * 1000;
-          console.log(date);
-          const newReminder = new Reminder({
-            task: user.pending.task,
-            date,
-            userSlackId: user.slackId,
+          }, (err) => {
+            const date = moment(user.pending.date).unix() * 1000;
+            console.log(date);
+            const newMeeting = new Meeting({
+              title: user.pending.title,
+              date,
+              userSlackId: user.slackId,
+              time: user.pending.time,
+              invitees: user.pending.invitees,
+            });
+            newMeeting.save((errr) => {
+              if (errr) {
+                console.log('this is error', errr);
+              }
+            });
+            console.log('this is the meeting', newMeeting);
+            user.pending = {}; // eslint-disable-line
+            user.save();
+            console.log('theoretically clearing', user.pending);
+            if (err) {
+              console.log('this is err:', err);
+              res.send('There was an error creating meeting', err);
+            } else {
+              // console.log('user', user);
+              console.log('created successfully');
+              res.send('Created meeting :white_check_mark:');
+            }
           });
-          console.log('this is the reminder', newReminder);
-          newReminder.save();
-          user.pending = {}; // eslint-disable-line
-          user.save();
-          console.log('theoretically clearing', user.pending);
-          if (err) {
-            console.log('this is err:', err);
-            res.send('There was an error creating reminder', err);
-          } else {
-            // console.log('user', user);
-            console.log('created successfully');
-            res.send('Created reminder :white_check_mark:');
-          }
-        });
+        } else if (payload.callback_id === 'reminder') {
+          calendar.events.insert({
+            auth: googleAuth,
+            calendarId: 'primary',
+            resource: {
+              summary: user.pending.task,
+              start: {
+                date: user.pending.date,
+                timeZone: 'America/Los_Angeles',
+              },
+              end: {
+                date: user.pending.date,
+                timeZone: 'America/Los_Angeles',
+              },
+            },
+          }, (err) => {
+            const date = moment(user.pending.date).unix() * 1000;
+            console.log(date);
+            const newReminder = new Reminder({
+              task: user.pending.task,
+              date,
+              userSlackId: user.slackId,
+            });
+            console.log('this is the reminder', newReminder);
+            newReminder.save();
+            user.pending = {}; // eslint-disable-line
+            user.save();
+            console.log('theoretically clearing', user.pending);
+            if (err) {
+              console.log('this is err:', err);
+              res.send('There was an error creating reminder', err);
+            } else {
+              // console.log('user', user);
+              console.log('created successfully');
+              res.send('Created reminder :white_check_mark:');
+            }
+          });
+        }
       }).catch((err) => {
         console.log('ERR:', err);
       });
@@ -84,8 +134,7 @@ app.post('/slack/interactive', (req, res) => {
     res.send('Cancelled :x:');
     User.findOne({ slackId: payload.user.id })
       .then((user) => {
-        user.pending.task = ''; // eslint-disable-line
-        user.pending.date = ''; // eslint-disable-line
+        user.pending = ''; // eslint-disable-line
         console.log('user should have pending cleared', user);
         user.save();
       });
@@ -139,7 +188,7 @@ app.get('/connect/callback', (req, res) => {
             })
             .then((mongoUser) => {
               res.send('You are connected to Google Calendar');
-              rtm.sendMessage('You are connected to Google Calendar' + mongoUser.slackDmId);
+              rtm.sendMessage('You are connected to Google Calendar', mongoUser.slackDmId);
             });
         }
       });

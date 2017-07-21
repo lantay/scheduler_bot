@@ -67,6 +67,19 @@ rtm.on(RTM_EVENTS.MESSAGE, (message) => {
       This is Scheduler Bot. In order to schedule reminders for you, I need access to your Google Calendar.
       Please visit: http://localhost:3000/connect?user=${user._id} to setup Google Calendar`, message.channel);
         } else {
+          message.text = message.text.replace('@', '');
+          console.log('message.text', message.text);
+          const regex = /<@\w+>/g;
+          const users = [];
+          message.text = message.text.replace(regex, (match) => { // eslint-disable-line
+            // const userId = match.slice(2, -1);
+            // const use = rtm.dataStore.getUserById(userId);
+            users.push({
+              displayName: user.profile.real_name,
+              email: user.profile.email,
+            });
+            return user.profile.first_name || user.profile.real_name;
+          });
           axios.get('https://api.api.ai/api/query', {
             params: {
               v: 20150910,
@@ -95,7 +108,7 @@ rtm.on(RTM_EVENTS.MESSAGE, (message) => {
                     attachments: [
                       {
                         fallback: 'not able',
-                        callback_id: 'simple',
+                        callback_id: 'reminder',
                         color: '#3AA3E3',
                         id: 1,
                         actions: [
@@ -118,7 +131,44 @@ rtm.on(RTM_EVENTS.MESSAGE, (message) => {
                     ],
                   });
               } else if (data.result.metadata.intentName === 'meeting.add') {
-                console.log('meeting added');
+                console.log('meeting added', data.result.parameters);
+                user.pending.title = data.result.parameters.any; // eslint-disable-line
+                user.pending.date = data.result.parameters.date; // eslint-disable-line
+                user.pending.time = data.result.parameters.time; // eslint-disable-line
+                // const a = data.result.parameters['given-name2'];
+                // console.log(a);
+                // const b = a.slice(1);
+                // console.log("a is", a, "b is", b);
+                user.pending.invitees = data.result.parameters['given-name2']; // eslint-disable-line
+                user.save();
+                web.chat.postMessage(message.channel, `Creating meeting about
+                ${user.pending.title} on ${user.pending.date} at ${user.pending.time} with ${user.pending.invitees}`,
+                  {
+                    attachments: [
+                      {
+                        fallback: 'not able',
+                        callback_id: 'meeting',
+                        color: '#3AA3E3',
+                        id: 1,
+                        actions: [
+                          {
+                            id: '1',
+                            name: 'confirmation',
+                            text: 'Yes',
+                            type: 'button',
+                            value: 'true',
+                          },
+                          {
+                            id: '2',
+                            name: 'confirmation',
+                            text: 'No',
+                            type: 'button',
+                            value: 'false',
+                          },
+                        ],
+                      },
+                    ],
+                  });
               }
             })
             .catch(err => console.log('THERE IS AN ERROR', err));
