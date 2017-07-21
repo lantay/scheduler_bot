@@ -1,5 +1,6 @@
 import { RtmClient, WebClient, CLIENT_EVENTS, RTM_EVENTS } from '@slack/client';
 import axios from 'axios';
+import moment from 'moment';
 
 const botToken = process.env.BOT_TOKEN;
 
@@ -18,13 +19,33 @@ rtm.on(CLIENT_EVENTS.RTM.AUTHENTICATED, (rtmStartData) => {
 
 // you need to wait for the client to fully connect before you can send messages
 
-const { User } = require('./models');
+const { User, Reminder } = require('./models');
 
 rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, () => {
   rtm.sendMessage(`I am a working bot! ${new Date()}`, channels.general.id);
 });
 
 rtm.on(RTM_EVENTS.MESSAGE, (message) => {
+  if (message.text === 'check') {
+    console.log('checking');
+    Reminder.find({
+      date: {
+        $gte: moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).unix() * 1000,
+        $lte: moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).add(2, 'day').unix() * 1000,
+      },
+    })
+      .then((reminders) => {
+        console.log('gets into reminder', reminders);
+        reminders.forEach((reminder) => {
+          User.find({ slackId: reminder.userSlackId })
+            .then((user) => {
+              console.log('enters .then', user);
+              rtm.sendMessage(`Reminder! Don't forget to ${reminder.task} ${moment(reminder.date).format('MM/DD/YYYY')}!`, message.channel);
+            });
+        });
+      });
+  }
+
   if (message.user) {
     web.reactions.add('brian', {
       channel: message.channel,

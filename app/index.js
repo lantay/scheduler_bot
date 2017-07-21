@@ -56,9 +56,11 @@ app.post('/slack/interactive', (req, res) => {
             },
           },
         }, (err) => {
+          const date = moment(user.pending.date).unix() * 1000;
+          console.log(date);
           const newReminder = new Reminder({
             task: user.pending.task,
-            date: user.pending.date,
+            date,
             userSlackId: user.slackId,
           });
           console.log('this is the reminder', newReminder);

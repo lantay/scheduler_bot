@@ -26,7 +26,7 @@ const Reminder = mongoose.model('Reminder', {
     required: true,
   },
   date: {
-    type: Date,
+    type: Number,
     required: true,
   },
   userSlackId: {
